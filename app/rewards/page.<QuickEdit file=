@@ -1,0 +1,98 @@
+app/rewards/page.tsx"import React, { useState } from 'react';
+import { toast } from 'react-toastify';
+import { LinkIcon } from '@heroicons/react/solid';
+
+// Dummy component, replace with your actual component
+const CustomButton = ({ variant, className, onClick, disabled, children }) => (
+  <button
+    onClick={onClick}
+    disabled={disabled}
+    className={`${className} bg-${variant}-500 hover:bg-${variant}-700 text-white font-bold py-2 px-4 rounded`}
+  >
+    {children}
+  </button>
+);
+
+
+const initialRewardsData = {
+  // ... other reward types remain unchanged
+  social: {
+    tasks: [
+      { id: 1, type: 'like', platform: 'Twitter', reward: 10, link: 'https://twitter.com/example/status/123456789', completed: false },
+      { id: 2, type: 'join', platform: 'Discord', reward: 15, link: 'https://discord.gg/example', completed: false },
+      { id: 3, type: 'join', platform: 'Telegram', reward: 20, link: 'https://t.me/example', completed: false },
+    ]
+  }
+};
+
+const RewardSection = ({ type, data }) => {
+  const [socialTasks, setSocialTasks] = useState(initialRewardsData.social.tasks);
+  const [verifyingTaskId, setVerifyingTaskId] = useState(null);
+  const [taskErrors, setTaskErrors] = useState({});
+
+  const handleCompleteTask = async (taskId) => {
+    setVerifyingTaskId(taskId);
+    setTaskErrors(prev => ({ ...prev, [taskId]: '' }));
+    try {
+      // Simulate API call
+      await new Promise((resolve, reject) => {
+        setTimeout(() => {
+          if (Math.random() < 0.8) {
+            resolve(true);
+          } else {
+            reject(new Error('Failed to verify task completion'));
+          }
+        }, 2000);
+      });
+
+      setSocialTasks(prevTasks =>
+        prevTasks.map(task =>
+          task.id === taskId ? { ...task, completed: true } : task
+        )
+      );
+      toast.success('Task completed successfully!');
+    } catch (error) {
+      console.error('Error completing task:', error);
+      setTaskErrors(prev => ({ ...prev, [taskId]: 'Failed to complete task. Please try again.' }));
+      toast.error('Failed to complete task. Please try again.');
+    } finally {
+      setVerifyingTaskId(null);
+    }
+  };
+
+  if (type === 'social') {
+    return (
+      <div className="space-y-6">
+        <h3 className="text-xl sm:text-2xl font-bold">Social Tasks</h3>
+        {data.tasks.map((task) => (
+          <div key={task.id} className="bg-gray-800 p-4 rounded-lg">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2">
+              <h4 className="text-base sm:text-lg font-semibold capitalize mb-1 sm:mb-0">
+                {task.type === 'join' ? `Join our ${task.platform}` : `${task.type} on ${task.platform}`}
+              </h4>
+              <span className="text-primary font-bold">{task.reward} $METAL</span>
+            </div>
+            <a href={task.link} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline flex items-center mb-2">
+              <LinkIcon className="mr-2 h-4 w-4" />
+              {task.type === 'join' ? `Join ${task.platform}` : 'View Post'}
+            </a>
+            <CustomButton
+              variant="gold"
+              className="w-full"
+              onClick={() => handleCompleteTask(task.id)}
+              disabled={task.completed || verifyingTaskId === task.id}
+            >
+              {task.completed ? 'Completed' : verifyingTaskId === task.id ? 'Verifying...' : 'Complete Task'}
+            </CustomButton>
+            {taskErrors[task.id] && (
+              <p className="text-red-500 mt-2 text-sm">{taskErrors[task.id]}</p>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return <div>Other reward types</div>; // Placeholder for other reward types
+};
+
+export default RewardSection;
